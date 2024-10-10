@@ -1,0 +1,69 @@
+CREATE TABLE Patients (
+    patient_id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    gender VARCHAR(10),
+    contact_info JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE EHRs (
+    ehr_id SERIAL PRIMARY KEY,
+    patient_id INT REFERENCES Patients(patient_id),
+    diagnosis TEXT,
+    treatment TEXT,
+    medication JSONB,
+    allergies TEXT,
+    visit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Medical_Images (
+    image_id SERIAL PRIMARY KEY,
+    patient_id INT REFERENCES Patients(patient_id),
+    image_url TEXT,
+    image_type VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Wearable_Data (
+    wearable_id SERIAL PRIMARY KEY,
+    patient_id INT REFERENCES Patients(patient_id),
+    data_type VARCHAR(50),
+    data_value FLOAT,
+    timestamp TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Genomic_Data (
+    genomic_id SERIAL PRIMARY KEY,
+    patient_id INT REFERENCES Patients(patient_id),
+    sequence TEXT,
+    analysis_results JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Analytics_Results (
+    result_id SERIAL PRIMARY KEY,
+    patient_id INT REFERENCES Patients(patient_id),
+    analysis_type VARCHAR(50),
+    result JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_patient_id ON EHRs(patient_id);
+CREATE INDEX idx_genomic_id ON Genomic_Data(patient_id);
+const { Pool } = require('pg');
+
+const pool = new Pool({
+    user: 'your_username',
+    host: 'localhost',
+    database: 'your_database',
+    password: 'your_password',
+    port: 5432,
+});
+
+module.exports = pool;
+const getEHRsByPatientId = async (patientId) => {
+    const res = await pool.query('SELECT * FROM EHRs WHERE patient_id = $1', [patientId]);
+    return res.rows;
+};
