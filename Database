@@ -1,0 +1,58 @@
+const admin = require('firebase-admin');
+
+// Initialize the Firebase Admin SDK
+admin.initializeApp({
+    credential: admin.credential.applicationDefault(), // Set up your service account credentials
+    databaseURL: 'https://your-project-id.firebaseio.com'
+});
+
+const db = admin.firestore();
+module.exports = db;
+const db = require('./firebase');
+
+// Add a patient
+const addPatient = async (patientData) => {
+    const res = await db.collection('patients').add(patientData);
+    console.log('Patient added with ID: ', res.id);
+};
+
+// Get EHRs by Patient ID
+const getEHRsByPatientId = async (patientId) => {
+    const snapshot = await db.collection('ehr').where('patient_id', '==', patientId).get();
+    if (snapshot.empty) {
+        console.log('No matching documents.');
+        return [];
+    }
+    const ehrData = [];
+    snapshot.forEach(doc => {
+        ehrData.push({ id: doc.id, ...doc.data() });
+    });
+    return ehrData;
+};
+
+// Update a patient
+const updatePatient = async (patientId, updatedData) => {
+    await db.collection('patients').doc(patientId).update(updatedData);
+    console.log('Patient updated');
+};
+
+// Delete a patient
+const deletePatient = async (patientId) => {
+    await db.collection('patients').doc(patientId).delete();
+    console.log('Patient deleted');
+};
+
+// Example usage
+(async () => {
+    await addPatient({
+        first_name: 'John',
+        last_name: 'Doe',
+        date_of_birth: admin.firestore.Timestamp.fromDate(new Date('1990-01-01')),
+        gender: 'Male',
+        contact_info: { email: 'john.doe@example.com', phone: '123-456-7890' },
+        created_at: admin.firestore.Timestamp.now()
+    });
+
+    const ehrRecords = await getEHRsByPatientId('some_patient_id');
+    console.log(ehrRecords);
+})();
